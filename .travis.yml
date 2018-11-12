@@ -1,0 +1,27 @@
+language: nix
+# see https://docs.travis-ci.com/user/languages/nix
+# and https://nixos.wiki/wiki/Nix_on_Travis
+sudo: false
+services:
+- docker
+before_install:
+- sudo mkdir -p /etc/nix
+- echo "substituters = https://cache.nixos.org/ file://$HOME/nix.store" | sudo tee -a /etc/nix/nix.conf > /dev/null
+- echo 'require-sigs = false' | sudo tee -a /etc/nix/nix.conf > /dev/null
+
+env:
+  global:
+  - secure: XvWLgWTK30P0/nnDy9Ky3FxNh8lsKfc6mvegpIycjo57BR/OKXIzDaMUgVJvP/xK4K2GjXWJ/b/YJqPfUErUJJMUClOj9gF65ujIVZdU7OiaQkKVEpQahREew2Bo6gZfg17isODrdKr/oHiLJywrbZa45HSD20GM59+od03sD+OmQcLQCQ9EVk4NiQeWgfGof33oA0HE2zV6QYBYgXG5fEfwNvPLvfpkYd9z/s3S0KXcGdzdtE5DJfszspsiDT1Zwl5r+rW/cAsqERnGMxmXsL2+MXiAy+YhbGxQDwC3SBdaxqbSQTf7sEvEx+6TkdgGfjGNYzQw8Cci9JPfpn8PzYiE6YIurFmLOz0yykzAX7MrRtpzKGk5wF+LpzRYYsE/hPr2jk6/d8MlmSqKTw/Ggifo6T7BrEffcZRBi2ZElVhPw98vFR+TS6BaXmjM5WzKEXfjfAgCuaBGOQn6LvlwcdtYg7CTv2JebSbTTdQ7SJ/b+PEso+EdbKXSWRpo4ofGPC7fQZ7OKblrbYes9KYcPx+aenv9JWF4rUOUFcuqNhT8i6iZA6kWhVoEENYlutZM4WcV9nRQVUbhJGGsvQPZIz1laI4bkPPxyHqduRfx9k35Bzf3CucYhYokAhYn84RkV5+SPc/AxaJQvnBsBklsu1k197hhaIVV5ghoDComzSI=
+  - secure: oVy3aai6NEVFyCxAyEoxyniApQqM4QMB08oWTSfmyLoUyAe79bV9uAX7WgiG6becucEK7XhBYL9sZCH+Gfx2l9p1Hcvany9sYa5R+SUhFSNhBXOq95JrDvJA90pEueUB41NyCj6wT+badmRHKmOmy8srkTg6gLz3a11KSHoJ6N1f9tEbhWwMHd1od8degVVYM8Tx5zjm9S2tnyyy2OMR7ltMlc53shPHfwd8u/j2pTKWKut2q2A3O+XujB81r0pHdPnkxRwGa86kw3vVkD6GLcHxUSVWTcogrDPrhLw3c9irpJt0FKfqVlWU5N5MAhxM0zBoqOKM67ABAD/KW+4/Ia9MKBZRcxID/olx18z9V8CEhKwVrCvCJMNoXZBEkGWwxkJkDHcwox9If5TS72tuRjBecIcD4NeQYTaWBF3X/RYRnOie8pVNIT//y9wS0vPwzlfvU4BjZz1EqbIltlVVLnwTocXslPwPB2Oh9wsp5tvV7YYWlIhPtrKD8YgagPnF5VidiyjsOq68pf2SKbXhI6fYzkzud/lGrcZ8iHA1Y8uR5wYvMYMEOx2ZDKAVHHVJnosr0fIgi3Ej8xyvaaUXe8DI3BFFjdwjv+vnqCFonwm/PpMvAcwYOM+9pg8cz0qsa2QHbdR2mMZoB+GPSI+98eslAJphrKG/q0oac+v9CkI=
+install:
+- nix-shell shell.nix --command "yarn install"
+script:
+- nix-shell shell.nix --command "yarn run build"
+- if [[ ( "$TRAVIS_PULL_REQUEST" = "false" ) && (( "$TRAVIS_BRANCH" = "master" ) || ( "$TRAVIS_TAG" != "" )) ]]; then nix-shell shell.nix --command  "yarn run docker:build" && export TE_DEPLOY=true; fi
+
+deploy:
+  provider: script
+  script: bash docker_push
+  on:
+    condition: "$TE_DEPLOY != ''"
+    all_branches: true

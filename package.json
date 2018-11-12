@@ -6,9 +6,8 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "test": "ng test",
-    "lint": "ng lint",
-    "e2e": "ng e2e"
+    "docker:build": "docker build -t testeditor/angular-sut:snapshot .",
+    "docker:run": "docker run -p 4300:4200 testeditor/angular-sut:snapshot &"
   },
   "private": true,
   "dependencies": {
